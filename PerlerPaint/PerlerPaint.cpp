@@ -1,5 +1,6 @@
 // PerlerPaint.cpp : Defines the entry point for the application.
 //
+//base starting code from https://www.planet-source-code.com/vb/scripts/ShowCode.asp?txtCodeId=4600&lngWId=3
 
 #include "stdafx.h"
 #include "PerlerPaint.h"
@@ -10,6 +11,7 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+int lastx, lasty, x, y;		//GLOBAL VARIABLES used in drawing.
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -121,8 +123,20 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY  - post a quit message and return
 //
 //
+
+void line(HDC _hdc, int x1, int y1, int x2, int y2)//This function draws line by the given four coordinates.
+{
+	MoveToEx(_hdc, x1, y1, NULL);
+	LineTo(_hdc, x2, y2);
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
+	HDC hdc;
+	PAINTSTRUCT ps;
+	RECT rect;
+
     switch (message)
     {
     case WM_COMMAND:
@@ -142,14 +156,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
-        }
-        break;
+	case WM_LBUTTONDOWN:					//If Left mouse button is pressed
+		lastx = LOWORD(lParam);			//Store the x-coordiante in lastx
+		lasty = HIWORD(lParam);			//Store the y-coordinate in lasty
+		return 0;
+	case WM_MOUSEMOVE:						//When mouse is moved on the client area (or form for VB users)
+		hdc = GetDC(hWnd);					//hdc is handle to device context
+		x = LOWORD(lParam);					//Store the current x 
+		y = HIWORD(lParam);					//Store the current y
+		if (wParam & MK_LBUTTON)			//If Left mouse button is down then draw
+		{
+			line(hdc, lastx, lasty, x, y);		//Draw the line frome the last pair of coordiates to current
+			lastx = x;						//The current x becomes the lastx for next line to be drawn
+			lasty = y;						//The current y becomes the lasty for next line to be drawn
+		}
+		ReleaseDC(hWnd, hdc);
+		return 0;
+	case WM_PAINT:
+		hdc = BeginPaint(hWnd, &ps);
+		GetClientRect(hWnd, &rect);
+		//TextOut(hdc, 0, 0, "Programmer :- Niloy Mondal. Email:- niloygk@yahoo.com", 53);
+		EndPaint(hWnd, &ps);
+		return 0;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
